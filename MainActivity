@@ -1,0 +1,258 @@
+package com.example.myapplication;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private EditText editTextInput;
+    private TextView textViewOutput,textViewLog;
+    private final String  sAdd = "+",sSub="-",sDiv="/",sMul="X";
+    private Button calcButton,clearButton;
+    private Button addButton,subButton,divButton,mulButton;
+    Boolean bOperSel = false;
+    Boolean bJustCalc = false; //Set to true just after a calculation has occurred
+    enum currentOperSelected
+    {
+        NONE,
+        DIV,
+        MUL,
+        ADD,
+        SUB
+    }
+    currentOperSelected operator = currentOperSelected.NONE;
+    List<Button> buttonList = new ArrayList<>(4);
+    List<Double> calcList = new ArrayList<>();
+    double dTotal =0.0;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        //Input box
+        editTextInput = findViewById(R.id.input_left);
+        editTextInput.addTextChangedListener(inputTextWatcher);
+        //Buttons
+        calcButton = findViewById((R.id.calculate_button));
+        calcButton.setOnClickListener(this);
+
+        clearButton = findViewById(R.id.clear_button);
+        clearButton.setOnClickListener(this);
+
+        addButton = findViewById(R.id.addition_button);
+        addButton.setOnClickListener((this));
+        buttonList.add(addButton);
+
+        subButton = findViewById(R.id.subtraction_button);
+        subButton.setOnClickListener(this);
+        buttonList.add(subButton);
+
+        divButton = findViewById((R.id.division_button));
+        divButton.setOnClickListener(this);
+        buttonList.add(divButton);
+
+        mulButton = findViewById((R.id.multiplication_button));
+        mulButton.setOnClickListener(this);
+        buttonList.add(mulButton);
+
+        //Text View
+        textViewOutput = findViewById(R.id.output);
+        textViewLog = findViewById(R.id.calculate_log);
+       setOperators(false);
+       calcButton.setEnabled(false);
+       clearButton.setEnabled(false);
+    }
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case  R.id.addition_button: {
+                add();
+                break;
+            }
+            case R.id.subtraction_button: {
+               subtract();
+                break;
+            }
+            case R.id.division_button:{
+                divide();
+                break;
+            }
+            case R.id.multiplication_button:{
+                multiply();
+                break;
+            }
+            case R.id.calculate_button:{
+                calculate();
+                break;
+            }
+            case R.id.clear_button: {
+                clear();
+                break;
+            }
+        }
+    }
+
+    private TextWatcher inputTextWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after)
+        {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count)
+        {
+            if (count > 0 && !bOperSel) { setOperators(true); }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+
+        }
+    };
+    void add()
+    {
+       operator = currentOperSelected.ADD;
+       getInputFromUser(sAdd);
+    }
+
+    void subtract()
+    {
+        operator = currentOperSelected.SUB;
+        getInputFromUser(sSub);
+    }
+
+    void multiply()
+    {
+       operator = currentOperSelected.MUL;
+       getInputFromUser(sMul);
+    }
+
+    void divide()
+    {
+       operator = currentOperSelected.DIV;
+
+       getInputFromUser(sDiv);
+    }
+    void calculate()
+    {
+        getInputFromUser("");
+        if (operator == currentOperSelected.DIV)
+        {
+            if (calcList.size() > 2)
+            {
+                dTotal /=  calcList.get(calcList.size()-1);
+            }
+            else {
+                dTotal = calcList.get(0) / calcList.get(1);
+            }
+        }
+        else if (operator == currentOperSelected.MUL)
+        {
+            if (calcList.size() > 2)
+            {
+                dTotal *=  calcList.get(calcList.size()-1);
+            }
+            else {
+                dTotal = calcList.get(0) * calcList.get(1);
+            }
+        }
+        else if (operator == currentOperSelected.ADD)
+        {
+            if (calcList.size() > 2)
+            {
+                dTotal +=  calcList.get(calcList.size()-1);
+            }
+            else {
+                dTotal = calcList.get(0) + calcList.get(1);
+            }
+        }
+        else if (operator == currentOperSelected.SUB)
+        {
+            if (calcList.size() > 2)
+            {
+                dTotal -=  calcList.get(calcList.size()-1);
+            }
+            else {
+                dTotal = calcList.get(0) - calcList.get(1);
+            }
+        }
+        if (calcList.size() > 2)
+        {
+          clearButton.setEnabled(true);
+        }
+        setOperators(true);
+        bJustCalc = true;
+        editTextInput.setEnabled(false);
+        String sTotal = Double.toString(dTotal);
+        textViewOutput.setText(sTotal);
+        operator = currentOperSelected.NONE;
+    }
+
+    void setOperators(Boolean bVal)
+    {
+      for (Button b: buttonList)
+      {
+          b.setEnabled(bVal);
+      }
+      if (bVal)
+      {
+        calcButton.setEnabled(false);
+      }
+      else {
+          calcButton.setEnabled(true);
+      }
+
+    }
+    void clear()
+    {
+      setOperators(false);
+      dTotal = 0.0;
+      operator = currentOperSelected.NONE;
+      calcButton.setEnabled(false);
+      calcList.clear();
+      bOperSel = false;
+      bJustCalc = false;
+      textViewOutput.setText("");
+      textViewLog.setText("");
+      editTextInput.setText("");
+      if (!editTextInput.isEnabled()) {
+            editTextInput.setEnabled(true);
+        }
+    }
+
+  void getInputFromUser(String sOperator)
+  {
+      if (!editTextInput.isEnabled()){
+          editTextInput.setEnabled(true);
+      }
+      if (!bJustCalc)
+      {
+          String sUserInput = editTextInput.getText().toString();
+          double val = Double.parseDouble(sUserInput);
+          textViewLog.setText(textViewLog.getText()+sUserInput);
+          calcList.add(val);
+          editTextInput.setText("");
+      }
+      textViewLog.setText(textViewLog.getText()+sOperator);
+      bOperSel = true;
+      setOperators(false);
+      bJustCalc = false;
+
+  }
+
+
+
+}
